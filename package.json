@@ -1,5 +1,5 @@
 {
-  "name": "entity_metadata",
+  "name": "io-ts-derive-class",
   "version": "1.0.0",
   "main": "src/index.ts",
   "license": "MIT",
