@@ -87,5 +87,6 @@ export function ref<P, A, O, I>(input: Constructor<A>): ClassType<P, A, O, I> {
             return new ClassType(i, type);
         }
     }
-    return null as any;
+
+    throw 'constructor has no runtime type data!'
 }

@@ -33,10 +33,7 @@ describe('Person tests', async () => {
 
     it('constructor with missing data fills in defaults', async () => {
         let person = new Person({ FirstName: 'Test', LastName: 'TestLast'});
-        let type = person.Address.City.getType();
-
-        let result = PersonType.decode(person);
-        console.log(PathReporter.report(result));
+        let result = person.getType().decode(person);
         expect(result.isLeft()).eq(false);
 
         if(!(person.Address instanceof Address)) {
@@ -44,5 +41,25 @@ describe('Person tests', async () => {
         }
     });
 
+    it('missing data fails decode', async () => {
+        let person = new Person({ FirstName: 'Test', LastName: 'TestLast'});
+        let firstName: any = undefined;
+        person.FirstName = firstName;
+        let result = person.getType().decode(person);
+        expect(result.isLeft()).eq(true);
+    });
+
+    it('assigned address decodes properly', async () => {
+        let address = new Address({ StreetAddress1: "123 Test st. "});
+        let person = new Person({ FirstName: 'Test', LastName: 'TestLast', Address: address });
+        let result = person.getType().decode(person);
+        expect(result.isLeft()).eq(false);
+    });
+
+    it('missing data fails decode', async () => {
+        let result = PersonType.decode({ FirstName: 'Test', LastName: 'TestLast'})
+
+        expect(result.isLeft()).eq(true);
+    });
 });
 
