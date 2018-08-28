@@ -4,47 +4,72 @@ export interface ITyped<P, A = any, O = any, I = t.mixed> {
     getType(): t.InterfaceType<P, A, O, I>;
 }
 
-function getDefault(type: t.Type<any>): any {
-    if(type instanceof t.StringType)
+function getDefault(type: t.Type<any, any, any>): any {
+    const tag = (type as any)['_tag'];
+    const tagContains = (search: string) => tag && tag.length > 0 ? tag.indexOf(search) != -1 : false;
+
+    if(tag === "StringType")
     {
         return '';
     }
 
-    if(type instanceof t.NumberType)
+    if(tag === "NullType")
+    {
+        return null;
+    }
+
+    if(tag === "NumberType")
     {
         return 0;
     }
     
-    if(type instanceof t.BooleanType)
+    if(tag === "BooleanType")
     {
         return false;
     }
 
-    if(type instanceof t.ArrayType){
+    if(tagContains("ArrayType")){
         return [];
     }
 
-    if(type instanceof t.ObjectType)
+    if(tag === "ObjectType")
     {
         return {};
     }
 
-    if(type instanceof t.DictionaryType)
+    if(tagContains("DictionaryType"))
     {
         return {};
+    }
+
+    if(tag === "RefinementType") {
+        const rt = type as t.RefinementType<any>;
+        return getDefault(rt.type);
     }
 
     if(type instanceof ClassType) {
         return new type.constructor();
     }
 
-    if(type instanceof t.InterfaceType){
+    if(tag === "InterfaceType"){
+        const t = type as t.InterfaceType<any>;
         const res: any = {};
-        for(const p in type.props){
-            res[p] = getDefault(type.props[p]);
+        for(const p in t.props){
+            res[p] = getDefault(t.props[p]);
         }
 
         return res;
+    }
+
+    if(tag === "UnionType") {
+        const u = type as t.UnionType<any>;
+        const len = u.types.length;
+        for(var i = (len - 1); i >= 0; i--){
+            const t = u.types[i];
+            const res = getDefault(t);
+            if(res !== undefined)
+                return res;
+        }
     }
 
     return undefined;
@@ -79,11 +104,12 @@ export class ClassType<P, A, O, I> extends t.InterfaceType<P, A, O, I> {
     }
 }
 
-export function ref<P, A, O, I>(input: Constructor<A>): ClassType<P, A, O, I> {
+export function ref<P, A, O = A, I = t.mixed>(input: Constructor<A>): ClassType<P, A, O, I> {
     let i = input as any;
     if(i.getType){
         const type = i.getType() as t.InterfaceType<P, A, O, I>;
-        if(type instanceof t.InterfaceType){
+        const tag = (type as any)['_tag'];
+        if(tag === "InterfaceType"){
             return new ClassType(i, type);
         }
     }

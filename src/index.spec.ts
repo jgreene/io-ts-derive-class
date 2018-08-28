@@ -3,7 +3,6 @@ import 'mocha';
 
 import * as t from 'io-ts'
 import * as m from './index'
-import { PathReporter } from 'io-ts/lib/PathReporter'
 
 const CityType = t.type({
     ID: t.number,
@@ -20,11 +19,14 @@ const AddressType = t.type({
 
 class Address extends m.DeriveClass(AddressType) {}
 
+
 const PersonType = t.type({
-    ID: t.number,
+    ID: t.Integer,
     FirstName: t.string,
     LastName: t.string,
-    Address: m.ref(Address)
+    MiddleName: t.union([t.string, t.null]),
+    Address: m.ref(Address),
+    Addresses: t.array(m.ref(Address))
 });
 
 class Person extends m.DeriveClass(PersonType) {}
@@ -60,6 +62,16 @@ describe('Person tests', async () => {
         let result = PersonType.decode({ FirstName: 'Test', LastName: 'TestLast'})
 
         expect(result.isLeft()).eq(true);
+    });
+
+    it('Addresses array defaults to empty array', async () => {
+        let person = new Person({ FirstName: 'Test', LastName: 'TestLast' });
+        expect(person.Addresses.length).eq(0);
+    });
+
+    it('MiddleName default is null', async () => {
+        let person = new Person({ FirstName: 'Test', LastName: 'TestLast' });
+        expect(person.MiddleName).eq(null);
     });
 });
 
