@@ -28,22 +28,30 @@ function getDefault(type: t.Type<any, any, any>): any {
         return false;
     }
 
-    if(tagContains("ArrayType")){
+    if(tag === "UndefinedType")
+    {
+        return undefined;
+    }
+
+    if(tagContains("ArrayType"))
+    {
         return [];
     }
 
-    if(tag === "ObjectType")
+    if(    tag === "ObjectType" 
+        || tag === "IntersectionType" 
+        || tag === "KeyofType" 
+        || tagContains("DictionaryType")
+    )
     {
         return {};
     }
 
-    if(tagContains("DictionaryType"))
+    if(    tag === "RefinementType" 
+        || tag === "ExactType" 
+        || tag === "ReadonlyType")
     {
-        return {};
-    }
-
-    if(tag === "RefinementType") {
-        const rt = type as t.RefinementType<any>;
+        const rt = (type as any) as { type: any };
         return getDefault(rt.type);
     }
 
@@ -51,7 +59,13 @@ function getDefault(type: t.Type<any, any, any>): any {
         return new type.constructor();
     }
 
-    if(tag === "InterfaceType"){
+    if(tag === "LiteralType")
+    {
+        const lt = type as t.LiteralType<any>;
+        return lt.value;
+    }
+
+    if(tag === "InterfaceType" || tag === "StrictType" || tag === "PartialType"){
         const t = type as t.InterfaceType<any>;
         const res: any = {};
         for(const p in t.props){
@@ -61,6 +75,7 @@ function getDefault(type: t.Type<any, any, any>): any {
         return res;
     }
 
+    //Default to the right most member of the union
     if(tag === "UnionType") {
         const u = type as t.UnionType<any>;
         const len = u.types.length;
@@ -72,7 +87,18 @@ function getDefault(type: t.Type<any, any, any>): any {
         }
     }
 
-    return undefined;
+    if(tag === "TupleType") {
+        const tt = type as t.TupleType<any>;
+        const len = tt.types.length;
+        const res = [];
+        for(var i = 0; i < len; i++) {
+            res.push(getDefault(tt.types[i]));
+        }
+
+        return res;
+    }
+
+    throw 'unsupported getDefault for type' + type;
 }
 
 function assignDefaults<P, A = any, O = any, I = t.mixed>(input: ITyped<P, A, O, I>) {

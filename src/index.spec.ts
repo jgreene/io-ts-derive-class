@@ -19,6 +19,7 @@ const AddressType = t.type({
 
 class Address extends m.DeriveClass(AddressType) {}
 
+const TestTupleType = t.tuple([t.string, t.number])
 
 const PersonType = t.type({
     ID: t.Integer,
@@ -26,7 +27,8 @@ const PersonType = t.type({
     LastName: t.string,
     MiddleName: t.union([t.string, t.null]),
     Address: m.ref(Address),
-    Addresses: t.array(m.ref(Address))
+    Addresses: t.array(m.ref(Address)),
+    Tuple: TestTupleType
 });
 
 class Person extends m.DeriveClass(PersonType) {}
@@ -72,6 +74,12 @@ describe('Person tests', async () => {
     it('MiddleName default is null', async () => {
         let person = new Person({ FirstName: 'Test', LastName: 'TestLast' });
         expect(person.MiddleName).eq(null);
+    });
+
+    it('Tuple defaults are correct', async () => {
+        let person = new Person({ FirstName: 'Test', LastName: 'TestLast' });
+        expect(person.Tuple[0]).eq('');
+        expect(person.Tuple[1]).eq(0);
     });
 });
 
