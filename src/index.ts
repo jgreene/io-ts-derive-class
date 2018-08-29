@@ -81,12 +81,8 @@ function getDefault(type: t.Type<any, any, any>): any {
     if(tag === "UnionType") {
         const u = type as t.UnionType<any>;
         const len = u.types.length;
-        for(var i = (len - 1); i >= 0; i--){
-            const t = u.types[i];
-            const res = getDefault(t);
-            if(res !== undefined)
-                return res;
-        }
+
+        return getDefault(u.types[len - 1]);
     }
 
     if(tag === "TupleType") {
