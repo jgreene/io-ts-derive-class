@@ -1,4 +1,6 @@
-import * as t from 'io-ts'
+import * as t from 'io-ts';
+
+import { ThrowReporter } from 'io-ts/lib/ThrowReporter';
 
 export interface ITyped<P, A = any, O = any, I = t.mixed> {
     getType(): t.InterfaceType<P, A, O, I>;
@@ -107,6 +109,22 @@ function assignDefaults<P, A = any, O = any, I = t.mixed>(input: ITyped<P, A, O,
     Object.assign(input, result);
 }
 
+function applyPartial<P, A, O, I>(type: t.InterfaceType<P, A, O, I>, typed: ITyped<P, A, O, I>, partial: Partial<t.TypeOf<typeof type>>) {
+    const target: any = typed;
+    const input: any = partial;
+    
+    Object.keys(input).forEach((p: string) => {
+        const value = input[p];
+        const pt: t.Type<any> = (type.props as any)[p];
+        const decodeResult = pt.decode(value);
+        if(decodeResult.isLeft()){
+            ThrowReporter.report(decodeResult);
+        }
+
+        target[p] = decodeResult.value;
+    });
+}
+
 export type Constructor<T = {}> = new (...args: any[]) => T;
 
 export function DeriveClass<P, A, O, I>(type: t.InterfaceType<P, A, O, I>)
@@ -115,7 +133,7 @@ export function DeriveClass<P, A, O, I>(type: t.InterfaceType<P, A, O, I>)
         constructor(input?: Partial<t.TypeOf<typeof type>>) {
             assignDefaults(this);
             if(input){
-                Object.assign(this, input);
+                applyPartial(type, this, input);
             }
         }
 
@@ -126,19 +144,45 @@ export function DeriveClass<P, A, O, I>(type: t.InterfaceType<P, A, O, I>)
 
 export class ClassType<P, A, O, I> extends t.InterfaceType<P, A, O, I> {
     constructor(public constructor: Constructor<A>, i: t.InterfaceType<P, A, O, I>) {
-        super(constructor.name, i.is, i.validate, i.encode, i.props);
+        super(
+            constructor.name, 
+            i.is, 
+            (input, ctx) => i.validate(input, ctx).map(x => new constructor(x)),
+            i.encode, 
+            i.props);
     }
 }
 
-export function ref<P, A, O = A, I = t.mixed>(input: Constructor<A>): ClassType<P, A, O, I> {
-    let i = input as any;
+function getTypeFromConstructor<A>(constructor: Constructor<A>) {
+    let i = constructor as any;
     if(i.getType){
-        const type = i.getType() as t.InterfaceType<P, A, O, I>;
+        return i.getType() as t.InterfaceType<any>;
+    }
+
+    return null;
+}
+
+export function ref<P, A, O = A, I = t.mixed>(constructor: Constructor<A>): ClassType<P, A, O, I> {
+    let type = getTypeFromConstructor(constructor) as t.InterfaceType<P, A, O, I> | null;
+    if(type !== null){
         const tag = (type as any)['_tag'];
         if(tag === "InterfaceType"){
-            return new ClassType(i, type);
+            return new ClassType(constructor, type);
         }
     }
 
     throw 'constructor has no runtime type data!'
+}
+
+export function decode<A>(constructor: Constructor<A>, input: t.mixed)  {
+    let type = getTypeFromConstructor(constructor);
+    if(type !== null){
+        const tag = (type as any)['_tag'];
+        if(tag === "InterfaceType"){
+            const decodeResult = type.decode(input);
+            return decodeResult.map(x => new constructor(x));
+        }
+    }
+
+    throw 'cannot decode.. constructor has no runtime type data!'
 }
