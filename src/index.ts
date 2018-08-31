@@ -124,7 +124,7 @@ function applyPartial<P, A, O, I>(type: t.InterfaceType<P, A, O, I>, typed: ITyp
 export type Constructor<T = {}> = new (...args: any[]) => T;
 
 export function DeriveClass<P, A, O, I>(type: t.InterfaceType<P, A, O, I>)
-: Constructor<t.TypeOf<typeof type> & ITyped<P, A, O, I>> {
+: new (input?: Partial<t.TypeOf<typeof type>>) => t.TypeOf<typeof type> & ITyped<P, A, O, I> {
     return class implements ITyped<P, A, O, I> {
         constructor(input?: Partial<t.TypeOf<typeof type>>) {
             assignDefaults(this);

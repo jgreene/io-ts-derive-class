@@ -60,6 +60,11 @@ describe('Person tests', async () => {
         let person = new Person({ FirstName: 'Test', LastName: 'TestLast', Address: address });
         let result = tdc.decode(Person, person);
         expect(result.isLeft()).eq(false);
+        let personResult: Person = result.value as Person;
+        expect(personResult.Address.StreetAddress1).eq("123 Test st. ");
+        expect(person.Address.StreetAddress1).eq("123 Test st. ");
+        expect(person.Address.StreetAddress1).eq(address.StreetAddress1);
+        expect(personResult.Address.StreetAddress1).eq(address.StreetAddress1);
     });
 
     it('missing data fails decode', async () => {
@@ -89,8 +94,8 @@ describe('Person tests', async () => {
         let type = person.getType();
         let json = JSON.stringify(person);
         let result = type.decode(JSON.parse(json));
-        let decodedPerson = new Person(result.value);
         expect(result.isLeft()).eq(false);
+        let decodedPerson = new Person(result.value as Person);
 
         if(!(decodedPerson.Address instanceof Address)) {
             expect(true).eq(false);
