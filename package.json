@@ -13,7 +13,8 @@
     "postinstall": "tsc -d -p ."
   },
   "dependencies": {
-    "io-ts": "^1.3.0"
+    "io-ts": "^1.3.0",
+    "moment": "^2.22.2"
   },
   "devDependencies": {
     "@types/chai": "^4.1.4",
