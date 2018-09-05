@@ -77,7 +77,7 @@ function getDefault(type: t.Type<any, any, any>): any {
     }
 
     if(type instanceof ClassType) {
-        return new type.constructor();
+        return new type.cons();
     }
 
     if(tag === "LiteralType")
@@ -158,18 +158,18 @@ export function DeriveClass<P, A, O, I>(type: t.InterfaceType<P, A, O, I>)
 }
 
 export class ClassType<P, A, O, I> extends t.InterfaceType<P, A, O, I> {
-    constructor(public constructor: Constructor<A>, i: t.InterfaceType<P, A, O, I>) {
+    constructor(public cons: Constructor<A>, i: t.InterfaceType<P, A, O, I>) {
         super(
-            constructor.name, 
+            cons.name, 
             i.is, 
-            (input, ctx) => i.validate(input, ctx).map(x => new constructor(x)),
+            (input, ctx) => i.validate(input, ctx).map(x => new cons(x)),
             i.encode, 
             i.props);
     }
 }
 
-function getTypeFromConstructor<A>(constructor: Constructor<A>) {
-    let i = constructor as any;
+function getTypeFromConstructor<A>(cons: Constructor<A>) {
+    let i = cons as any;
     if(i.getType){
         return i.getType() as t.InterfaceType<any>;
     }
@@ -177,25 +177,25 @@ function getTypeFromConstructor<A>(constructor: Constructor<A>) {
     return null;
 }
 
-export function ref<P, A, O = A, I = t.mixed>(constructor: Constructor<A>): ClassType<P, A, O, I> {
-    let type = getTypeFromConstructor(constructor) as t.InterfaceType<P, A, O, I> | null;
+export function ref<P, A, O = A, I = t.mixed>(cons: Constructor<A>): ClassType<P, A, O, I> {
+    let type = getTypeFromConstructor(cons) as t.InterfaceType<P, A, O, I> | null;
     if(type !== null){
         const tag = (type as any)['_tag'];
         if(tag === "InterfaceType"){
-            return new ClassType(constructor, type);
+            return new ClassType(cons, type);
         }
     }
 
     throw 'constructor has no runtime type data!'
 }
 
-export function decode<A>(constructor: Constructor<A>, input: t.mixed)  {
-    let type = getTypeFromConstructor(constructor);
+export function decode<A>(cons: Constructor<A>, input: t.mixed)  {
+    let type = getTypeFromConstructor(cons);
     if(type !== null){
         const tag = (type as any)['_tag'];
         if(tag === "InterfaceType"){
             const decodeResult = type.decode(input);
-            return decodeResult.map(x => new constructor(x));
+            return decodeResult.map(x => new cons(x));
         }
     }
 
