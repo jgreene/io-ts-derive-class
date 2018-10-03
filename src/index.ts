@@ -2,120 +2,38 @@ import * as t from 'io-ts';
 import { ThrowReporter } from 'io-ts/lib/ThrowReporter';
 import * as moment from 'moment';
 
-export const DateTime = new t.Type<moment.Moment>(
-    'DateTime',
-    (mixed: any): mixed is moment.Moment => moment.isMoment(mixed),
-    (mixed: any, context: any) => {
-      if(typeof mixed === "string"){
-        const instance = moment(mixed);
-        return instance.isValid() ? t.success(instance) : t.failure(mixed, context)
-      }
-      else if(moment.isMoment(mixed)) {
-        const instance: moment.Moment = mixed as moment.Moment;
-        return instance.isValid() ? t.success(instance) : t.failure(mixed, context)
-      }
-      return t.failure(mixed, context);
-    },
-    instance => instance
-  )
-  
+import { getDefault } from './defaults';
+
+export { getDefault, registerDefault, ITypeDefault, tagDefault, tagContainsDefault } from './defaults';
+
 export type DateTime = moment.Moment
+
+export class DateTimeType extends t.Type<DateTime>{
+    readonly _tag: 'DateTime' = 'DateTime';
+    constructor() {
+        super(
+            'DateTime',
+            (mixed: any): mixed is DateTime => moment.isMoment(mixed),
+            (mixed: any, context: any) => {
+                if(typeof mixed === "string"){
+                    const instance = moment(mixed);
+                    return instance.isValid() ? t.success(instance) : t.failure(mixed, context)
+                }
+                else if(moment.isMoment(mixed)) {
+                    const instance: moment.Moment = mixed as moment.Moment;
+                    return instance.isValid() ? t.success(instance) : t.failure(mixed, context)
+                }
+                return t.failure(mixed, context);
+            },
+            instance => instance
+        );
+    }
+}
+
+export const DateTime = new DateTimeType();
 
 export interface ITyped<P, A = any, O = any, I = t.mixed> {
     getType(): t.InterfaceType<P, A, O, I>;
-}
-
-function getDefault(type: t.Type<any, any, any>): any {
-    const tag = (type as any)['_tag'];
-    const tagContains = (search: string) => tag && tag.length > 0 ? tag.indexOf(search) != -1 : false;
-
-    if(tag === "StringType")
-    {
-        return '';
-    }
-
-    if(tag === "NullType")
-    {
-        return null;
-    }
-
-    if(tag === "NumberType")
-    {
-        return 0;
-    }
-    
-    if(tag === "BooleanType")
-    {
-        return false;
-    }
-
-    if(tag === "UndefinedType")
-    {
-        return undefined;
-    }
-
-    if(tagContains("ArrayType"))
-    {
-        return [];
-    }
-
-    if(    tag === "ObjectType" 
-        || tag === "IntersectionType" 
-        || tag === "KeyofType" 
-        || tagContains("DictionaryType")
-    )
-    {
-        return {};
-    }
-
-    if(    tag === "RefinementType" 
-        || tag === "ExactType" 
-        || tag === "ReadonlyType")
-    {
-        const rt = (type as any) as { type: any };
-        return getDefault(rt.type);
-    }
-
-    if(type instanceof ClassType) {
-        return new type.cons();
-    }
-
-    if(tag === "LiteralType")
-    {
-        const lt = type as t.LiteralType<any>;
-        return lt.value;
-    }
-
-    if(tag === "InterfaceType" || tag === "StrictType" || tag === "PartialType"){
-        const t = type as t.InterfaceType<any>;
-        const res: any = {};
-        for(const p in t.props){
-            res[p] = getDefault(t.props[p]);
-        }
-
-        return res;
-    }
-
-    //Default to the right most member of the union
-    if(tag === "UnionType") {
-        const u = type as t.UnionType<any>;
-        const len = u.types.length;
-
-        return getDefault(u.types[len - 1]);
-    }
-
-    if(tag === "TupleType") {
-        const tt = type as t.TupleType<any>;
-        const len = tt.types.length;
-        const res = [];
-        for(var i = 0; i < len; i++) {
-            res.push(getDefault(tt.types[i]));
-        }
-
-        return res;
-    }
-
-    throw 'unsupported getDefault for type' + type;
 }
 
 function assignDefaults<P, A = any, O = any, I = t.mixed>(input: ITyped<P, A, O, I>) {
@@ -142,11 +60,14 @@ function applyPartial<P, A, O, I>(type: t.InterfaceType<P, A, O, I>, typed: ITyp
 
 export type Constructor<T = {}> = new (...args: any[]) => T;
 
-export function DeriveClass<P, A, O, I>(type: t.InterfaceType<P, A, O, I>)
+export function DeriveClass<P, A, O, I>(type: t.InterfaceType<P, A, O, I>, defaults: Partial<t.TypeOf<typeof type>> | undefined = undefined)
 : new (input?: Partial<t.TypeOf<typeof type>>) => t.TypeOf<typeof type> & ITyped<P, A, O, I> {
     return class implements ITyped<P, A, O, I> {
         constructor(input?: Partial<t.TypeOf<typeof type>>) {
             assignDefaults(this);
+            if(defaults){
+                applyPartial(type, this, defaults);
+            }
             if(input){
                 applyPartial(type, this, input);
             }
@@ -186,7 +107,7 @@ export function ref<P, A, O = A, I = t.mixed>(cons: Constructor<A>): ClassType<P
         }
     }
 
-    throw 'constructor has no runtime type data!'
+    throw new Error('constructor has no runtime type data!');
 }
 
 export function decode<A>(cons: Constructor<A>, input: t.mixed)  {
@@ -199,7 +120,7 @@ export function decode<A>(cons: Constructor<A>, input: t.mixed)  {
         }
     }
 
-    throw 'cannot decode.. constructor has no runtime type data!'
+    throw new Error('cannot decode.. constructor has no runtime type data!');
 }
 
 export function getType(input: any): t.InterfaceType<any> | null {

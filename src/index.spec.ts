@@ -3,6 +3,7 @@ import 'mocha';
 
 import * as t from 'io-ts'
 import * as tdc from './index'
+import * as moment from 'moment';
 
 //import { PathReporter } from 'io-ts/lib/PathReporter'
 
@@ -25,16 +26,18 @@ const TestTupleType = t.tuple([t.string, t.number])
 
 const PersonType = t.type({
     ID: t.Integer,
+    LookupID: t.Integer,
     FirstName: t.string,
     LastName: t.string,
     MiddleName: t.union([t.string, t.null]),
     Address: tdc.ref(Address),
     NullableAddress: t.union([tdc.ref(Address), t.null]),
     Addresses: t.array(tdc.ref(Address)),
-    Tuple: TestTupleType
+    Tuple: TestTupleType,
+    CreatedOn: tdc.DateTime,
 });
 
-class Person extends tdc.DeriveClass(PersonType) {}
+class Person extends tdc.DeriveClass(PersonType, { LookupID: 1}) {}
 
 describe('Person tests', async () => {
 
@@ -47,6 +50,17 @@ describe('Person tests', async () => {
             expect(true).eq(false);
         }
     });
+
+    it('Can override defaults with DeriveClass', async () => {
+        let person = new Person();
+        expect(person.LookupID).eq(1);
+    })
+
+    it('Can get default DateTime', async () => {
+        let person = new Person();
+        const now = moment();
+        expect(person.CreatedOn.diff(now, 'minutes')).eq(0)
+    })
 
     it('missing data fails decode', async () => {
         let person = new Person({ FirstName: 'Test', LastName: 'TestLast'});
