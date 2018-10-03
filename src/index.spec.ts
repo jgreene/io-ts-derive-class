@@ -88,6 +88,12 @@ describe('Person tests', async () => {
         expect(result.isLeft()).eq(true);
     });
 
+    it('Default person has no Addresses', async () => {
+        let person = new Person();
+        
+        expect(person.Addresses.length).eq(0);
+    })
+
     it('Addresses array defaults to empty array', async () => {
         let person = new Person({ FirstName: 'Test', LastName: 'TestLast' });
         expect(person.Addresses.length).eq(0);

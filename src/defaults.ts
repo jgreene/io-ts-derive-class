@@ -16,23 +16,23 @@ const doesTagContain = (type: t.Type<any>, search: string) => {
 
 class TagDefault implements ITypeDefault {
     
-    constructor(public tag: string, public defaultValue: any){}
+    constructor(public tag: string, public defaultValue: () => any){}
 
     isMatch: (type: t.Type<any, any, t.mixed>) => boolean = (type) => {
         const tag = getTag(type);
         return tag === this.tag;
     }
-    getDefault: (type: t.Type<any, any, t.mixed>) => any = (type) => this.defaultValue;
+    getDefault: (type: t.Type<any, any, t.mixed>) => any = (type) => this.defaultValue();
 }
 
 class TagContainsDefault implements ITypeDefault {
     
-    constructor(public tag: string, public defaultValue: any){}
+    constructor(public tag: string, public defaultValue: () => any){}
 
     isMatch: (type: t.Type<any, any, t.mixed>) => boolean = (type) => {
         return doesTagContain(type, this.tag);
     }
-    getDefault: (type: t.Type<any, any, t.mixed>) => any = (type) => this.defaultValue;
+    getDefault: (type: t.Type<any, any, t.mixed>) => any = (type) => this.defaultValue();
 }
 
 class InnerTypeDefault implements ITypeDefault {
@@ -133,8 +133,8 @@ class DateTimeTypeDefault implements ITypeDefault {
     }
 }
 
-export const tagDefault = (tag: string, defaultValue: any) => new TagDefault(tag, defaultValue);
-export const tagContainsDefault = (tag: string, defaultValue: any) => new TagContainsDefault(tag, defaultValue);
+export const tagDefault = (tag: string, defaultValue: () => any) => new TagDefault(tag, defaultValue);
+export const tagContainsDefault = (tag: string, defaultValue: () => any) => new TagContainsDefault(tag, defaultValue);
 export const innerTypeDefault = (tag: string) => new InnerTypeDefault(tag);
 
 const defaultMap: Array<ITypeDefault> = [
@@ -146,17 +146,17 @@ const defaultMap: Array<ITypeDefault> = [
     innerTypeDefault('ReadonlyType'),
     innerTypeDefault('ExactType'),
     innerTypeDefault('RefinementType'),
-    tagContainsDefault('DictionaryType', {}),
-    tagDefault('KeyofType', {}),
-    tagDefault('IntersectionType', {}),
-    tagDefault('ObjectType', {}),
-    tagContainsDefault('ArrayType', []),
+    tagContainsDefault('DictionaryType', () => {}),
+    tagDefault('KeyofType', () => {}),
+    tagDefault('IntersectionType', () => {}),
+    tagDefault('ObjectType', () => {}),
+    tagContainsDefault('ArrayType', () => []),
     new UnionTypeDefault(),
-    tagDefault('BooleanType', false),
-    tagDefault('NumberType', 0),
-    tagDefault('UndefinedType', undefined),
-    tagDefault('NullType', null),
-    tagDefault('StringType', ''),
+    tagDefault('BooleanType', () => false),
+    tagDefault('NumberType', () => 0),
+    tagDefault('UndefinedType', () => undefined),
+    tagDefault('NullType', () => null),
+    tagDefault('StringType', () => ''),
 ]
 
 export function registerDefault(typeDefault: ITypeDefault) {
