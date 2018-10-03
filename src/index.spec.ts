@@ -29,6 +29,7 @@ const PersonType = t.type({
     LastName: t.string,
     MiddleName: t.union([t.string, t.null]),
     Address: tdc.ref(Address),
+    NullableAddress: t.union([tdc.ref(Address), t.null]),
     Addresses: t.array(tdc.ref(Address)),
     Tuple: TestTupleType
 });
@@ -100,6 +101,15 @@ describe('Person tests', async () => {
         if(!(decodedPerson.Address instanceof Address)) {
             expect(true).eq(false);
         }
+    });
+
+    it('NullableAddress has correct type', async () => {
+        let person = new Person();
+        expect(person.NullableAddress).is.null;
+
+        let person2 = new Person({ NullableAddress: new Address({ StreetAddress1: 'Street1' })});
+        expect(person2.NullableAddress).is.not.null;
+        expect(person2.NullableAddress instanceof Address).eq(true);
     });
 });
 

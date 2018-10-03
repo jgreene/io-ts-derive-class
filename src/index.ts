@@ -201,3 +201,17 @@ export function decode<A>(cons: Constructor<A>, input: t.mixed)  {
 
     throw 'cannot decode.. constructor has no runtime type data!'
 }
+
+export function getType(input: any): t.InterfaceType<any> | null {
+    if(input && input.getType) {
+        let t = input.getType();
+        if(t){
+            const tag = (t as any)['_tag'];
+            if(tag === "InterfaceType"){
+                return t as t.InterfaceType<any>;
+            }
+        }
+    }
+
+    return null;
+}
