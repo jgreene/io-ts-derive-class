@@ -48,13 +48,15 @@ function applyPartial<P, A, O, I>(type: t.InterfaceType<P, A, O, I>, typed: ITyp
     
     Object.keys(input).forEach((p: string) => {
         const value = input[p];
-        const pt: t.Type<any> = (type.props as any)[p];
-        const decodeResult = pt.decode(value);
-        if(decodeResult.isLeft()){
-            ThrowReporter.report(decodeResult);
-        }
+        const pt: t.Type<any> | undefined = (type.props as any)[p];
+        if(pt !== undefined){
+            const decodeResult = pt.decode(value);
+            if(decodeResult.isLeft()){
+                ThrowReporter.report(decodeResult);
+            }
 
-        target[p] = decodeResult.value;
+            target[p] = decodeResult.value;
+        }
     });
 }
 

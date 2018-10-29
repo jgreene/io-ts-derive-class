@@ -110,7 +110,7 @@ describe('Person tests', async () => {
         expect(person.Tuple[1]).eq(0);
     });
 
-    it('encode decode is isomorhpic', async () => {
+    it('encode decode is isomorphic', async () => {
         let person = new Person({ FirstName: 'Test', LastName: 'TestLast', });
         let type = person.getType();
         let json = JSON.stringify(person);
@@ -131,5 +131,17 @@ describe('Person tests', async () => {
         expect(person2.NullableAddress).is.not.null;
         expect(person2.NullableAddress instanceof Address).eq(true);
     });
+
+    it('Invalid partial argument still results in valid entity', async () => {
+        const arg = { FirstName: 'Test', LastName: 'TestLast', invalidField: 'not a valid field' }
+
+        let person = new Person(arg);
+
+        let type = person.getType();
+        let json = JSON.stringify(person);
+        let result = type.decode(JSON.parse(json));
+        expect(result.isLeft()).eq(false);
+        expect((person as any)['invalidField']).eq(undefined)
+    })
 });
 
