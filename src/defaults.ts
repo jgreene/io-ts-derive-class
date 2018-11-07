@@ -1,5 +1,6 @@
 import * as t from 'io-ts';
 import * as moment from 'moment';
+import * as uuidv4 from 'uuid/v4';
 
 import { ClassType } from './index';
 
@@ -45,6 +46,20 @@ class InnerTypeDefault implements ITypeDefault {
     }
     getDefault: (type: t.Type<any, any, t.mixed>) => any = (type) => {
         const rt = (type as any) as { type: any };
+        return getDefault(rt.type);
+    }
+}
+
+class RefinementTypeDefault implements ITypeDefault {
+    isMatch: (type: t.Type<any, any, t.mixed>) => boolean = (type) => {
+        const tag = getTag(type);
+        return tag === 'RefinementType'
+    }
+    getDefault: (type: t.Type<any, any, t.mixed>) => any = (type) => {
+        const rt = (type as any) as { type: any, name: string };
+        if(rt.name === 'UUID'){
+            return uuidv4();
+        }
         return getDefault(rt.type);
     }
 }
@@ -145,7 +160,7 @@ const defaultMap: Array<ITypeDefault> = [
     new LiteralTypeDefault(),
     innerTypeDefault('ReadonlyType'),
     innerTypeDefault('ExactType'),
-    innerTypeDefault('RefinementType'),
+    new RefinementTypeDefault(),
     tagContainsDefault('DictionaryType', () => {}),
     tagDefault('KeyofType', () => {}),
     tagDefault('IntersectionType', () => {}),

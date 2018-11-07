@@ -7,6 +7,13 @@ import * as moment from 'moment';
 
 //import { PathReporter } from 'io-ts/lib/PathReporter'
 
+type Operators = 'equals' | 'notEquals'
+
+const Operators = {
+    equals: 'equals' as Operators,
+    notEquals: 'notEquals' as Operators
+}
+
 const CityType = t.type({
     ID: t.number,
     Name: t.string
@@ -35,6 +42,8 @@ const PersonType = t.type({
     Addresses: t.array(tdc.ref(Address)),
     Tuple: TestTupleType,
     CreatedOn: tdc.DateTime,
+    Operator: t.union([t.keyof(Operators), t.null]),
+    PersonGUID: tdc.uuid
 });
 
 class Person extends tdc.DeriveClass(PersonType, { LookupID: 1}) {}
@@ -142,6 +151,35 @@ describe('Person tests', async () => {
         let result = type.decode(JSON.parse(json));
         expect(result.isLeft()).eq(false);
         expect((person as any)['invalidField']).eq(undefined)
+    })
+
+    it('Keyof field can be set', async () => {
+        const arg = { Operator: Operators.equals }
+        const person = new Person(arg);
+
+        const type = person.getType();
+        const json = JSON.stringify(person);
+        const result = type.decode(JSON.parse(json));
+
+        expect(result.isLeft()).eq(false);
+        expect(person.Operator).eq(Operators.equals);
+    })
+
+    it('PersonGUID defaults to new uuid', async () => {
+        const person = new Person();
+
+        const result = tdc.uuid.decode(person.PersonGUID)
+
+        expect(result.isLeft()).eq(false);
+    })
+
+    it('Invalid PersonGUID results in left result', async () => {
+        const person = new Person();
+        person.PersonGUID = 'invalid uuid';
+
+        const result = tdc.uuid.decode(person.PersonGUID)
+
+        expect(result.isLeft()).eq(true);
     })
 });
 

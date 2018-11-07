@@ -32,6 +32,10 @@ export class DateTimeType extends t.Type<DateTime>{
 
 export const DateTime = new DateTimeType();
 
+const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export const uuid = t.refinement(t.string, uuid => regex.test(uuid), 'UUID')
+
 export interface ITyped<P, A = any, O = any, I = t.mixed> {
     getType(): t.InterfaceType<P, A, O, I>;
 }
