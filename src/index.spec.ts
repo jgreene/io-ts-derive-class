@@ -132,6 +132,19 @@ describe('Person tests', async () => {
         }
     });
 
+    it('class based encode decode is isomorphic', async () => {
+        let person = new Person({ FirstName: 'Test', LastName: 'TestLast', });
+        let json = JSON.stringify(person);
+        let result = tdc.decode(Person, JSON.parse(json));
+        expect(result.isLeft()).eq(false);
+        
+        if(result.isRight()){
+            let decodedPerson = result.value;
+
+            expect(JSON.stringify(decodedPerson)).eq(json);
+        }
+    });
+
     it('NullableAddress has correct type', async () => {
         let person = new Person();
         expect(person.NullableAddress).is.null;
