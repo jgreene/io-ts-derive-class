@@ -78,6 +78,7 @@ Derived Defaults:
     | t.union([t.number, t.string])    | ''            |
     | t.type({})                       | {}            |
     | t.tuple([t.string, t.number])    | ['', 0]       |
+    | t.array(arraytype)               | []            |
     | tdc.ref(MyClass)                 | new MyClass() |
     | tdc.DateTime                     | moment()      |
     | tdc.uuid                         | creates uuid4 |
