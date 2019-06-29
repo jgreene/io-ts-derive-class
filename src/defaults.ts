@@ -1,5 +1,4 @@
 import * as t from 'io-ts';
-import * as moment from 'moment';
 import * as uuidv4 from 'uuid/v4';
 
 import { ClassType } from './index';
@@ -141,10 +140,10 @@ class DateTimeTypeDefault implements ITypeDefault {
 
     isMatch: (t: t.Type<any, any, t.mixed>) => boolean = (t) => {
         let tag = getTag(t);
-        return tag === 'DateTime';
+        return tag === 'Date';
     }
     getDefault: (t: t.Type<any, any, t.mixed>) => any = (type) => {
-        return moment();
+        return new Date();
     }
 }
 

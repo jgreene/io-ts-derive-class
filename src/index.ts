@@ -1,27 +1,24 @@
 import * as t from 'io-ts';
 import { ThrowReporter } from 'io-ts/lib/ThrowReporter';
-import * as moment from 'moment';
+import { parse, isValid } from 'date-fns'
 
 import { getDefault } from './defaults';
 
 export { getDefault, registerDefault, ITypeDefault, tagDefault, tagContainsDefault } from './defaults';
 
-export type DateTime = moment.Moment
-
-export class DateTimeType extends t.Type<DateTime>{
-    readonly _tag: 'DateTime' = 'DateTime';
+export class DateTimeType extends t.Type<Date>{
+    readonly _tag: 'Date' = 'Date';
     constructor() {
         super(
-            'DateTime',
-            (mixed: any): mixed is DateTime => moment.isMoment(mixed),
+            'Date',
+            (mixed: any): mixed is Date => mixed instanceof Date,
             (mixed: any, context: any) => {
                 if(typeof mixed === "string"){
-                    const instance = moment(mixed);
-                    return instance.isValid() ? t.success(instance) : t.failure(mixed, context)
+                    const instance = parse(mixed)
+                    return isValid(instance) ? t.success(instance) : t.failure(mixed, context)
                 }
-                else if(moment.isMoment(mixed)) {
-                    const instance: moment.Moment = mixed as moment.Moment;
-                    return instance.isValid() ? t.success(instance) : t.failure(mixed, context)
+                else if(mixed instanceof Date) {
+                    return isValid(mixed) ? t.success(mixed) : t.failure(mixed, context)
                 }
                 return t.failure(mixed, context);
             },

@@ -1,9 +1,10 @@
 import { expect } from 'chai';
 import 'mocha';
 
+import { differenceInMinutes } from 'date-fns';
+
 import * as t from 'io-ts'
 import * as tdc from './index'
-import * as moment from 'moment';
 
 //import { PathReporter } from 'io-ts/lib/PathReporter'
 
@@ -67,8 +68,8 @@ describe('Person tests', async () => {
 
     it('Can get default DateTime', async () => {
         let person = new Person();
-        const now = moment();
-        expect(person.CreatedOn.diff(now, 'minutes')).eq(0)
+        const now = new Date();
+        expect(differenceInMinutes(now, person.CreatedOn)).eq(0)
     })
 
     it('missing data fails decode', async () => {
